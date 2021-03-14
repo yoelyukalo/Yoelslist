@@ -1,4 +1,5 @@
 class PostsController < ApplicationController
+  skip_before_action :authorized, only: [:index, :show, :create, :new, :update, :destroy]
   def index
     @posts = Post.all
     render json: @posts
@@ -13,50 +14,51 @@ class PostsController < ApplicationController
 
   def create
     @post = Post.new(post_params)
-    @post.user = current_user
     if @post.save
-      redirect_to post_path(@post.id) # /posts/:id
-    else
-      render :new
+      render json: @post
     end
   end
 
   def show
-    @post = Post.find(params[:id]) # pulls id from /posts/:id in url
+    @post = Post.find(params[:id])
+    render json: @post 
+    # pulls id from /posts/:id in url
   end
 
   def edit
     @post = Post.find(params[:id])
-    if current_user == @post.user
-      render :edit
-    else
-      flash[:alert] = "Access denied!"
-      redirect_to root_path
+    if @post.edit
+        render json: @post
     end
   end
 
-  def update
+  # def update
+  #   @post = Post.find(params[:id])
+  #   if current_user == @post.user && @post.update(post_params)
+  #     render :json: @post
+  #   else
+  #     render :edit
+  #   end
+  # end
+
+  def update 
     @post = Post.find(params[:id])
-    if current_user == @post.user && @post.update(post_params)
-      redirect_to @post
-    else
-      render :edit
+    if @post.update(post_params)
+        render json: @post
     end
-  end
+
+end
 
   def destroy
     @post = Post.find(params[:id])
-    if @post.user == current_user
-      @post.destroy
-    else
-      flash[:alert] = "Access denied!"
+    if @post.destroy
+      render json: @post
     end
-    redirect_to posts_path
   end
 
   private
 
   def post_params
-    params.require(:post).permit(:title, :cost, :body, :image, :longitude, :latitude, :address, :user_id)
+    params.require(:post).permit(:title, :cost, :body, :pic,:image, :longitude, :latitude, :address, :user_id)
   end
 end
